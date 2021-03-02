@@ -1,0 +1,28 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /ftp
+  max-http-header-size: 8096
+
+
+
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: zxG_000106
+    url: jdbc:mysql://152.136.102.20:3306/ftp?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&useSSL=false
+
+  #  redis:
+  #    host: 152.136.102.20
+  #    port: 6379
+  #    password: zxG_000106
+  #    timeout: 5000ms
+
+  servlet:
+    multipart:
+      max-file-size: 4GB
+
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
