@@ -1,9 +1,12 @@
 package com.zhouxug.ftp.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.net.ftp.FTPClient;
 
 /**
  * @ProjectName: ftp
@@ -24,6 +27,10 @@ public class User {
     private String password;
 
     private Integer isLogin;
+
+    @JsonIgnore
+    @TableField(exist = false)
+    private FTPClient ftpClient = null;
 
     public User(String username, String password) {
         this.username = username;

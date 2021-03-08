@@ -3,13 +3,19 @@ package com.zhouxug.ftp.controller;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.zhouxug.ftp.dao.UserMapper;
+import com.zhouxug.ftp.entity.Param.UploadParam;
 import com.zhouxug.ftp.entity.User;
 import com.zhouxug.ftp.entity.VO.ResultVO;
 import com.zhouxug.ftp.service.UserService;
+import com.zhouxug.ftp.util.FTPUtil;
 import com.zhouxug.ftp.util.ResultVOUtil;
+import org.apache.commons.net.ftp.FTPClient;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpSession;
+import java.io.IOException;
+import java.util.Objects;
 
 /**
  * @ProjectName: ftp
@@ -38,7 +44,7 @@ public class UserController {
                           @RequestBody User user) {
         ResultVO login = userService.login(user);
         if (login.getCode().equals(1)) {
-            session.setAttribute("user", user.getUsername());
+            session.setAttribute("user", user);
         }
         return login;
     }
@@ -55,14 +61,25 @@ public class UserController {
         return logout;
     }
 
-
-
     @GetMapping("mount")
     public ResultVO getMount() {
         QueryWrapper<User> wrapper = new QueryWrapper<>();
         wrapper.eq("is_login", 1);
         Integer count = userMapper.selectCount(wrapper);
         return ResultVOUtil.success("在线人数", count);
+    }
+
+    @PostMapping(value = "upload")
+    public ResultVO upload(HttpSession session,
+                           @RequestParam MultipartFile file,
+                           String uploadParam) throws IOException {
+        User user = (User)session.getAttribute("user");
+        if (Objects.isNull(user)) {
+            return ResultVOUtil.fail("登录失效，请重新登录");
+        }
+        JSONObject jsonObject = new JSONObject(uploadParam);
+
+        return userService.upload(user, file, jsonObject.get("path").toString(), jsonObject.get("fileName").toString());
     }
 //
 //    @GetMapping("ll")

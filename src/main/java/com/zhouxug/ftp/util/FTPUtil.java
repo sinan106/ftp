@@ -78,12 +78,14 @@ public class FTPUtil {
         }
     }
 
-    public static void downloadSingleFile(FTPClient ftpClient, String absoluteLocalDirectory, String relativeRemotePathAndName) {
+    public static boolean downloadSingleFile(FTPClient ftpClient, String absoluteLocalDirectory, String relativeRemotePathAndName) {
         if (!ftpClient.isConnected() || !ftpClient.isAvailable()) {
             System.out.println("链接无效");
+            return false;
         }
         if (StringUtils.isBlank(absoluteLocalDirectory) || StringUtils.isBlank(relativeRemotePathAndName)) {
             System.out.println("本地路径或远程路径为空");
+            return false;
         }
 
         try {
@@ -105,7 +107,7 @@ public class FTPUtil {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
+        return true;
     }
 
     public static boolean uploadSingleFile(FTPClient ftpClient, String relativeRemotePath, String fileName, InputStream input) {
@@ -154,7 +156,7 @@ public class FTPUtil {
     //测试连接关闭
     public static void main(String[] args) {
 //        System.out.println("-----------------------应用启动------------------------");
-//        FTPClient ftpClient = FTPUtil.ConnectFTPServer("152.136.102.20", 21, "ftpuser", "zxG_000106", "GBK");
+//        FTPClient ftpClient = FTPUtil.connectFTPServer("152.136.102.20", 21, "ftpuser", "zxG_000106", "GBK");
 //        System.out.println("FTP 连接是否成功：" + ftpClient.isConnected());
 //        System.out.println("FTP 连接是否有效：" + ftpClient.isAvailable());
 //        CloseFTPServer(ftpClient);
