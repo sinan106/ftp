@@ -11,11 +11,13 @@ import com.zhouxug.ftp.util.ResultVOUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.net.ftp.FTPClient;
 import org.springframework.stereotype.Service;
+import org.springframework.util.FileSystemUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import javax.servlet.http.HttpServletResponse;
+import java.io.*;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -63,6 +65,9 @@ public class UserServiceImpl implements UserService {
     @Override
     public ResultVO logout(User user) {
         user.setIsLogin(0);
+        user.setPassword(MD5Util.str2MD5(user.getPassword()));
+
+
         userMapper.updateById(user);
         FTPUtil.closeFTPServer(user.getFtpClient());
         return ResultVOUtil.success("退出登录", user.getUsername());
@@ -70,27 +75,51 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public ResultVO upload(User user, MultipartFile multipartFile, String path, String fileName) throws IOException {
-        byte [] byteArr=multipartFile.getBytes();
+        byte[] byteArr = multipartFile.getBytes();
         InputStream inputStream = new ByteArrayInputStream(byteArr);
 
         boolean flag = FTPUtil.uploadSingleFile(user.getFtpClient(), path, fileName, inputStream);
         if (flag) {
             return ResultVOUtil.success("上传成功: ", path + fileName);
-        }
-        else {
+        } else {
             return ResultVOUtil.fail("上传失败");
         }
     }
 
     @Override
-    public ResultVO download(User user, String absoluteLocalDirectory, String relativeRemotePathAndName) {
-        boolean flag = FTPUtil.downloadSingleFile(user.getFtpClient(), absoluteLocalDirectory, relativeRemotePathAndName);
-        if (flag) {
-            return ResultVOUtil.success("下载成功: ", absoluteLocalDirectory);
-        }
-        else {
+    public ResultVO download(HttpServletResponse response, User user, String relativeRemotePathAndName) {
+        String fileName = FTPUtil.downloadSingleFile(user.getFtpClient(), "", relativeRemotePathAndName);
+        if (fileName != null) {
+            File file = new File("/" + fileName);
+            if (!file.exists()) {
+                return ResultVOUtil.fail("文件不存在");
+            }
+            response.reset();
+            response.setContentLength((int) file.length());
+            response.setHeader("Content-Disposition", "attachment;filename=" + fileName);
+
+            try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file));) {
+                byte[] buff = new byte[10240];
+                OutputStream os = response.getOutputStream();
+                int i = 0;
+                while ((i = bis.read(buff)) != -1) {
+                    os.write(buff, 0, i);
+                    os.flush();
+                }
+                FileSystemUtils.deleteRecursively(new File("/" + fileName));
+            } catch (IOException e) {
+                return ResultVOUtil.fail("下载失败");
+            }
+            return ResultVOUtil.success("下载成功", null);
+        } else {
             return ResultVOUtil.fail("下载失败");
         }
+    }
+
+    @Override
+    public ResultVO fileList(User user, String basePath, List<Map> nameList) {
+        FTPUtil.getFileNameList(user.getFtpClient(), basePath, nameList);
+        return ResultVOUtil.success("获取文件列表", nameList);
     }
 
 

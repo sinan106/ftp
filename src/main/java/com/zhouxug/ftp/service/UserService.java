@@ -2,10 +2,12 @@ package com.zhouxug.ftp.service;
 
 import com.zhouxug.ftp.entity.User;
 import com.zhouxug.ftp.entity.VO.ResultVO;
-import org.apache.commons.net.ftp.FTPClient;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @ProjectName: ftp
@@ -22,5 +24,7 @@ public interface UserService {
 
     ResultVO upload(User user, MultipartFile multipartFile, String path, String fileName) throws IOException;
 
-    ResultVO download(User user, String absoluteLocalDirectory, String relativeRemotePathAndName);
+    ResultVO download(HttpServletResponse response, User user, String relativeRemotePathAndName);
+
+    ResultVO fileList(User user, String basePath, List<Map> nameList);
 }

@@ -1,10 +1,12 @@
 package com.zhouxug.ftp.util;
 
+import com.zhouxug.ftp.entity.VO.ResultVO;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
 import org.apache.commons.net.ftp.FTPReply;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -78,14 +80,14 @@ public class FTPUtil {
         }
     }
 
-    public static boolean downloadSingleFile(FTPClient ftpClient, String absoluteLocalDirectory, String relativeRemotePathAndName) {
+    public static String downloadSingleFile(FTPClient ftpClient, String absoluteLocalDirectory, String relativeRemotePathAndName) {
         if (!ftpClient.isConnected() || !ftpClient.isAvailable()) {
             System.out.println("链接无效");
-            return false;
+            return null;
         }
-        if (StringUtils.isBlank(absoluteLocalDirectory) || StringUtils.isBlank(relativeRemotePathAndName)) {
-            System.out.println("本地路径或远程路径为空");
-            return false;
+        if (StringUtils.isBlank(relativeRemotePathAndName)) {
+            System.out.println("远程路径为空");
+            return null;
         }
 
         try {
@@ -103,11 +105,11 @@ public class FTPUtil {
             os.flush();
             os.close();
             System.out.println(">>>>>FTP服务器文件下载完毕*********" + relativeRemotePathAndName);
-
+            return targetFileName;
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return true;
+        return null;
     }
 
     public static boolean uploadSingleFile(FTPClient ftpClient, String relativeRemotePath, String fileName, InputStream input) {
@@ -118,7 +120,12 @@ public class FTPUtil {
 
 
         try {
-            ftpClient.changeWorkingDirectory(relativeRemotePath);
+            boolean b = ftpClient.changeWorkingDirectory(relativeRemotePath);
+            if (!b) {
+                ftpClient.changeWorkingDirectory("/data/ftp");
+                ftpClient.makeDirectory(relativeRemotePath);
+                ftpClient.changeWorkingDirectory(relativeRemotePath);
+            }
 
             ftpClient.storeFile(fileName, input);
             input.close();
@@ -133,6 +140,12 @@ public class FTPUtil {
 
     public static void getFileNameList(FTPClient ftpClient, String basePath, List<Map> nameList) {
         try {
+            System.out.println("====================");
+            System.out.println("FTP 连接是否成功：" + ftpClient.isConnected());
+            System.out.println("FTP 连接是否有效：" + ftpClient.isAvailable());
+            if (basePath.charAt(0) == '/')
+                basePath= basePath.substring(1);
+
             FTPFile[] ftpFiles = ftpClient.listFiles(basePath);
             if (ftpFiles != null && ftpFiles.length > 0) {
                 for (FTPFile ftpFile : ftpFiles) {
@@ -151,6 +164,40 @@ public class FTPUtil {
             e.printStackTrace();
         }
     }
+
+//    public static ResultVO downLocal(HttpServletResponse response, String fileName) {
+//        response.setHeader("content-type", "application/octet-stream");
+//        response.setContentType("application/octet-stream");
+//        try {
+//            response.setHeader("Content-Disposition", "attachment;filename=" + java.net.URLEncoder.encode(fileName, "UTF-8"));
+//        } catch (UnsupportedEncodingException e2) {
+//            e2.printStackTrace();
+//        }
+//        byte[] buff = new byte[10240];
+//        BufferedInputStream bis = null;
+//        OutputStream os;
+//
+//        try {
+//            os = response.getOutputStream();
+//            bis = new BufferedInputStream(new FileInputStream(new File(fileName)));
+//            int i = bis.read(buff);
+//            while (i != -1) {
+//                os.write(buff, 0, buff.length);
+//                os.flush();
+//                i = bis.read(buff);
+//            }
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        } finally {
+//            if (bis != null) {
+//                try {
+//                    bis.close();
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//        }
+//    }
 
 
     //测试连接关闭

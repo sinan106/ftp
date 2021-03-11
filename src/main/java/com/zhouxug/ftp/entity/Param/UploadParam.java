@@ -1,7 +1,6 @@
 package com.zhouxug.ftp.entity.Param;
 
 import lombok.Data;
-import sun.dc.pr.PRError;
 
 /**
  * @ProjectName: ftp
